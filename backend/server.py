@@ -98,27 +98,22 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 @app.middleware("http")
 async def require_shared_secret(request: Request, call_next):
     path = request.url.path
-    # /health is public for monitoring; CORS preflight runs above this anyway
-    # but bypass OPTIONS defensively.
     if path == "/health" or request.method == "OPTIONS":
         return await call_next(request)
+    # Open demo mode: no secret configured → allow everything.
+    if not SHARED_SECRET:
+        return await call_next(request)
+    # Secret is configured — require one of: trusted origin, matching header.
     origin = request.headers.get("origin", "")
     if origin in TRUSTED_ORIGINS:
         return await call_next(request)
-    # Vercel server-side rewrites don't forward Origin but do set x-forwarded-host.
     fwd_host = request.headers.get("x-forwarded-host", "")
     if any(fwd_host == h.removeprefix("https://").removeprefix("http://") for h in TRUSTED_ORIGINS):
         return await call_next(request)
-    # Same-origin GETs (incl. EventSource) don't send Origin per the Fetch
-    # spec, but they DO send Referer. Trust trusted-origin Referer in lieu of
-    # Origin so SSE streams work without an explicit secret.
     referer = request.headers.get("referer", "")
     if any(referer.startswith(o + "/") for o in TRUSTED_ORIGINS):
         return await call_next(request)
-    if SHARED_SECRET and request.headers.get("x-medkit-auth") == SHARED_SECRET:
-        return await call_next(request)
-    # If no BACKEND_SHARED_SECRET is configured, allow all (open demo mode).
-    if not SHARED_SECRET:
+    if request.headers.get("x-medkit-auth") == SHARED_SECRET:
         return await call_next(request)
     return JSONResponse({"detail": "unauthorized"}, status_code=401)
 
