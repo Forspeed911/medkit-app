@@ -10,7 +10,7 @@ export const config = {
 
 // NOTE: keeping `grand-rounds-backend.onrender.com` until/unless we rename
 // the Render service. Renaming breaks the public hostname.
-const BACKEND_URL = 'https://grand-rounds-backend.onrender.com';
+const BACKEND_URL = 'https://medkit-app-production.up.railway.app';
 
 export default async function middleware(request: Request): Promise<Response> {
   const incoming = new URL(request.url);
