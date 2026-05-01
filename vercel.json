@@ -1,7 +1,7 @@
 {
   "rewrites": [
-    { "source": "/agent/:path*", "destination": "https://medkit-app-production.up.railway.app:8080/agent/:path*" },
-    { "source": "/voice/:path*", "destination": "https://medkit-app-production.up.railway.app:8080/voice/:path*" },
+    { "source": "/agent/:path*", "destination": "https://medkit-app-production.up.railway.app/agent/:path*" },
+    { "source": "/voice/:path*", "destination": "https://medkit-app-production.up.railway.app/voice/:path*" },
     { "source": "/:path*", "destination": "/" }
   ]
 }
