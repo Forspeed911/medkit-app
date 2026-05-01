@@ -127,6 +127,11 @@ app.add_middleware(
 )
 
 
+@app.get("/debug-headers")
+async def debug_headers(request: Request):
+    return {"headers": dict(request.headers), "shared_secret_set": bool(SHARED_SECRET)}
+
+
 @app.get("/health")
 def health():
     """Frontend polls this before showing the attending dock so a missing
