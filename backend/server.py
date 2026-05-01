@@ -61,11 +61,20 @@ from slowapi.util import get_remote_address
 SHARED_SECRET = os.environ.get("BACKEND_SHARED_SECRET", "")
 ALLOWED_ORIGINS = [
     "https://medkit.vercel.app",
+    "https://medkit-app-xi.vercel.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
 ]
+TRUSTED_ORIGINS = {
+    "https://medkit.vercel.app",
+    "https://medkit-app-xi.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+}
 DEV_ORIGINS = {
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -94,15 +103,18 @@ async def require_shared_secret(request: Request, call_next):
     if path == "/health" or request.method == "OPTIONS":
         return await call_next(request)
     origin = request.headers.get("origin", "")
-    if origin in DEV_ORIGINS:
+    if origin in TRUSTED_ORIGINS:
         return await call_next(request)
     # Same-origin GETs (incl. EventSource) don't send Origin per the Fetch
-    # spec, but they DO send Referer. Trust dev-origin Referer in lieu of
-    # Origin so SSE streams from localhost work without an explicit secret.
+    # spec, but they DO send Referer. Trust trusted-origin Referer in lieu of
+    # Origin so SSE streams work without an explicit secret.
     referer = request.headers.get("referer", "")
-    if any(referer.startswith(o + "/") for o in DEV_ORIGINS):
+    if any(referer.startswith(o + "/") for o in TRUSTED_ORIGINS):
         return await call_next(request)
     if SHARED_SECRET and request.headers.get("x-medkit-auth") == SHARED_SECRET:
+        return await call_next(request)
+    # If no BACKEND_SHARED_SECRET is configured, allow all (open demo mode).
+    if not SHARED_SECRET:
         return await call_next(request)
     return JSONResponse({"detail": "unauthorized"}, status_code=401)
 
