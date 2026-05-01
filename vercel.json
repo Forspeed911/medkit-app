@@ -1,7 +1,7 @@
 {
   "rewrites": [
-    { "source": "/agent/:path*", "destination": "https://grand-rounds-backend.onrender.com/agent/:path*" },
-    { "source": "/voice/:path*", "destination": "https://grand-rounds-backend.onrender.com/voice/:path*" },
+    { "source": "/agent/:path*", "destination": "https://RAILWAY_BACKEND_URL/agent/:path*" },
+    { "source": "/voice/:path*", "destination": "https://RAILWAY_BACKEND_URL/voice/:path*" },
     { "source": "/:path*", "destination": "/" }
   ]
 }

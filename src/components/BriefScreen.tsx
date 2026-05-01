@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { DoodleScatter, PatientFace, TopBar } from './primitives';
 import { getCase, getPatientCase } from '../data/cases';
 import { store, useStore, useTweaks } from '../game/store';
@@ -21,6 +22,7 @@ function buildVitals(p?: { hr: number; bp: string; spo2: number; temp: number; r
 }
 
 export function BriefScreen() {
+  const { t } = useTranslation();
   const tweaks = useTweaks();
   const caseId = useStore((s) => s.selectedCaseId);
   const c = getCase(caseId);
@@ -30,10 +32,10 @@ export function BriefScreen() {
   const arrivalBlurb = patient?.arrivalBlurb ?? 'Looks well. No acute distress.';
   const severityChip =
     patient?.severity === 'critical'
-      ? { label: 'critical · resuscitate', tone: 'rose' }
+      ? { label: t('brief.severity.critical'), tone: 'rose' }
       : patient?.severity === 'urgent'
-        ? { label: 'urgent', tone: 'peach' }
-        : { label: 'first presentation', tone: 'rose' };
+        ? { label: t('brief.severity.urgent'), tone: 'peach' }
+        : { label: t('brief.severity.routine'), tone: 'rose' };
 
   return (
     <div className="screen paper" style={{ position: 'relative' }}>
@@ -77,13 +79,13 @@ export function BriefScreen() {
               marginBottom: 16,
             }}
           >
-            <span className="chip butter">DOORWAY BRIEF</span>
+            <span className="chip butter">{t('brief.doorwayBrief')}</span>
             <span className="chip">Case #07</span>
           </div>
 
           <h1 style={{ fontSize: 32, lineHeight: 1.1, marginBottom: 4 }}>{c.name}</h1>
           <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink-2)', marginBottom: 16 }}>
-            {c.age} y · {c.sex === 'F' ? 'Female' : 'Male'} · {c.cond}
+            {c.age} · {c.sex === 'F' ? t('brief.sex.F') : t('brief.sex.M')} · {c.cond}
           </div>
 
           <div
@@ -106,7 +108,7 @@ export function BriefScreen() {
                 marginBottom: 4,
               }}
             >
-              CHIEF COMPLAINT
+              {t('brief.chiefComplaint')}
             </div>
             <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.35 }}>
               {`"${chiefComplaint}"`}
@@ -133,7 +135,7 @@ export function BriefScreen() {
                 marginBottom: 2,
               }}
             >
-              ON THE BENCH
+              {t('brief.onTheBench')}
             </div>
             <div style={{ fontSize: 14, fontWeight: 600 }}>{arrivalBlurb}</div>
           </div>
@@ -157,12 +159,12 @@ export function BriefScreen() {
                 marginBottom: 6,
               }}
             >
-              YOUR TASK
+              {t('brief.yourTask')}
             </div>
             <ol style={{ margin: 0, paddingLeft: 18, fontSize: 14, fontWeight: 700, lineHeight: 1.5 }}>
-              <li>Take a focused history</li>
-              <li>Examine if appropriate</li>
-              <li>Agree a plan with the patient</li>
+              <li>{t('brief.task1')}</li>
+              <li>{t('brief.task2')}</li>
+              <li>{t('brief.task3')}</li>
             </ol>
           </div>
         </div>
@@ -189,7 +191,7 @@ export function BriefScreen() {
               </div>
               <div>
                 <div style={{ fontWeight: 900, fontSize: 18 }}>{c.name.split(' ')[0]}</div>
-                <div style={{ fontSize: 13, color: 'var(--ink-2)', fontWeight: 700 }}>currently waiting</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-2)', fontWeight: 700 }}>{t('brief.currentlyWaiting')}</div>
                 <div style={{ marginTop: 6 }} className={`chip ${severityChip.tone}`}>
                   {severityChip.label}
                 </div>
@@ -208,7 +210,7 @@ export function BriefScreen() {
                 marginBottom: 8,
               }}
             >
-              TRIAGE VITALS
+              {t('brief.triageVitals')}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
               {VITALS.map((v) => (
@@ -247,7 +249,7 @@ export function BriefScreen() {
                   textTransform: 'uppercase',
                 }}
               >
-                YOUR TIME
+                {t('brief.yourTime')}
               </div>
               <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--peach-deep)' }}>8:00</div>
             </div>
@@ -273,7 +275,7 @@ export function BriefScreen() {
             style={{ fontSize: 22, padding: '18px 0' }}
             onClick={() => store.setScreen('encounter')}
           >
-            ✊ Knock and enter
+            {t('brief.knockEnter')}
           </button>
         </div>
       </div>

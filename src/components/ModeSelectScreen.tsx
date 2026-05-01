@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Doodle, TopBar } from './primitives';
 import { store } from '../game/store';
 
@@ -158,6 +159,7 @@ function Plant({ flip = false }: { flip?: boolean }) {
 }
 
 export function ModeSelectScreen() {
+  const { t } = useTranslation();
   return (
     <div className="screen" style={{ background: 'var(--cream)' }}>
       <TopBar here={0} showProfile />
@@ -199,29 +201,29 @@ export function ModeSelectScreen() {
           }}
         >
           <Door
-            label="Polyclinics"
-            sub="Outpatient — choose a specialty"
+            label={t('mode.polyclinics')}
+            sub={t('mode.polyclinicsSub')}
             color="var(--mint)"
             doorColor="#5FCFA0"
             available
-            tags={['Open now', '24 specialties']}
+            tags={[t('mode.openNow'), t('mode.specialties24')]}
             onOpen={() => store.setScreen('gpRoom')}
           />
           <Door
-            label="Services"
-            sub="Imaging, lab, pharmacy"
+            label={t('mode.services')}
+            sub={t('mode.servicesSub')}
             color="var(--sky)"
             doorColor="#5AB7F2"
             locked
-            tags={['Coming soon']}
+            tags={[t('mode.comingSoon')]}
           />
           <Door
-            label="Emergency"
-            sub="ED triage & resus"
+            label={t('mode.emergency')}
+            sub={t('mode.emergencySub')}
             color="var(--rose)"
             doorColor="#F47A92"
             locked
-            tags={['Coming soon']}
+            tags={[t('mode.comingSoon')]}
           />
         </div>
 

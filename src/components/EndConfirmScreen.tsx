@@ -1,21 +1,13 @@
+import { useTranslation } from 'react-i18next';
 import { DoodleScatter, PatientFace, TopBar } from './primitives';
 import { getCase } from '../data/cases';
 import { store, useStore, useTweaks } from '../game/store';
 import type { EndConfirmChecks } from '../game/types';
 
-interface Item {
-  id: keyof EndConfirmChecks;
-  label: string;
-  sub: string;
-}
-
-const ITEMS: Item[] = [
-  { id: 'sum', label: 'Have you summarised back to the patient?', sub: 'A short read-back of the story.' },
-  { id: 'safe', label: 'Have you safety-netted?', sub: 'What to look for, when to come back.' },
-  { id: 'ice', label: 'Have you addressed their ideas, concerns, expectations?', sub: 'Did the patient feel heard?' },
-];
+const ITEM_IDS: Array<keyof EndConfirmChecks> = ['sum', 'safe', 'ice'];
 
 export function EndConfirmScreen() {
+  const { t } = useTranslation();
   const tweaks = useTweaks();
   const checked = useStore((s) => s.endConfirm);
   const caseId = useStore((s) => s.selectedCaseId);
@@ -70,7 +62,7 @@ export function EndConfirmScreen() {
                   boxShadow: 'var(--plush-sm)',
                 }}
               >
-                "Is there anything else I should know?"
+                {t('endConfirm.isAnythingElse')}
                 <svg style={{ position: 'absolute', right: -14, top: 14 }} width="20" height="22" viewBox="0 0 20 22">
                   <path
                     d="M 0 4 L 18 12 L 0 18 Z"
@@ -86,9 +78,9 @@ export function EndConfirmScreen() {
           </div>
 
           <div className="chip butter" style={{ marginBottom: 16 }}>
-            BEFORE YOU FINISH
+            {t('endConfirm.beforeFinish')}
           </div>
-          <h1 style={{ fontSize: 32, lineHeight: 1.1, marginBottom: 8 }}>Take a breath.</h1>
+          <h1 style={{ fontSize: 32, lineHeight: 1.1, marginBottom: 8 }}>{t('endConfirm.takeABreath')}</h1>
           <div
             style={{
               fontSize: 15,
@@ -98,17 +90,17 @@ export function EndConfirmScreen() {
               maxWidth: 460,
             }}
           >
-            One last check — these affect your debrief. Tick what you actually did.
+            {t('endConfirm.body')}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
-            {ITEMS.map((it) => {
-              const on = checked[it.id];
+            {ITEM_IDS.map((id) => {
+              const on = checked[id];
               return (
                 <div
-                  key={it.id}
+                  key={id}
                   className="tap"
-                  onClick={() => store.toggleEndConfirm(it.id)}
+                  onClick={() => store.toggleEndConfirm(id)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -138,8 +130,8 @@ export function EndConfirmScreen() {
                     {on ? '✓' : ''}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 900, fontSize: 15 }}>{it.label}</div>
-                    <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--ink-2)' }}>{it.sub}</div>
+                    <div style={{ fontWeight: 900, fontSize: 15 }}>{t(`endConfirm.items.${id}.label`)}</div>
+                    <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--ink-2)' }}>{t(`endConfirm.items.${id}.sub`)}</div>
                   </div>
                 </div>
               );
@@ -153,7 +145,7 @@ export function EndConfirmScreen() {
               style={{ flex: 1 }}
               onClick={() => store.setScreen('encounter')}
             >
-              ← Back to the room
+              {t('endConfirm.backToRoom')}
             </button>
             <button
               type="button"
@@ -161,7 +153,7 @@ export function EndConfirmScreen() {
               style={{ flex: 1.4 }}
               onClick={() => store.setScreen('debrief')}
             >
-              End consultation →
+              {t('endConfirm.endConsultation')}
             </button>
           </div>
         </div>

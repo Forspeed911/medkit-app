@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import type { PerspectiveCamera } from 'three';
@@ -99,6 +100,7 @@ function AdaptiveCameraFov() {
 }
 
 function Loader() {
+  const { t } = useTranslation();
   return (
     <Html center>
       <div
@@ -115,7 +117,7 @@ function Loader() {
           letterSpacing: '0.05em',
         }}
       >
-        Loading polyclinic…
+        {t('encounter.loadingPolyclinic')}
       </div>
     </Html>
   );
@@ -169,6 +171,7 @@ function Kbd({ children }: { children: React.ReactNode }) {
 }
 
 export function EncounterScreen() {
+  const { t } = useTranslation();
   const state = useGameState();
   const patient = state.polyclinic.patient;
 
@@ -400,7 +403,7 @@ export function EncounterScreen() {
             }}
             style={{ fontSize: 14, padding: '12px 18px' }}
           >
-            End consultation →
+            {t('encounter.endConsultation')}
           </button>
         </div>
 
@@ -427,7 +430,7 @@ export function EncounterScreen() {
         >
           {pointerLocked ? (
             <>
-              Just talk — voice is live · <Kbd>E</Kbd> examine · <Kbd>T</Kbd> mute · <Kbd>Esc</Kbd> release
+              {t('encounter.justTalk')} · <Kbd>E</Kbd> {t('encounter.examine')} · <Kbd>T</Kbd> {t('encounter.mute')} · <Kbd>Esc</Kbd> {t('encounter.release')}
             </>
           ) : (
             <>
@@ -435,7 +438,7 @@ export function EncounterScreen() {
                 className={voiceActive ? 'dot breathe' : 'dot'}
                 style={{ background: voiceActive ? 'var(--peach-deep)' : 'var(--ink-soft)' }}
               />
-              {voiceActive ? 'Voice live' : 'Voice muted'} · click the room to look around · <Kbd>E</Kbd> examine · <Kbd>T</Kbd> mute
+              {voiceActive ? t('encounter.voiceLive') : t('encounter.voiceMuted')} · {t('encounter.clickToLook')} · <Kbd>E</Kbd> {t('encounter.examine')} · <Kbd>T</Kbd> {t('encounter.mute')}
             </>
           )}
         </div>

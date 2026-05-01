@@ -1,4 +1,5 @@
 import { Fragment, type CSSProperties, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { store } from '../game/store';
 
 // ─── PATIENT FACE ───────────────────────────────────────────
@@ -300,16 +301,18 @@ interface BreadcrumbProps {
 }
 
 export function Breadcrumb({ steps, here }: BreadcrumbProps) {
+  const { t } = useTranslation();
   return (
     <div className="breadcrumb">
       {steps.map((s, i) => {
         const target = LABEL_TO_SCREEN[s];
         const isHere = i === here;
         const clickable = !isHere && !!target;
+        const label = t(`nav.${s}`, s);
         return (
           <Fragment key={i}>
             {isHere ? (
-              <span className="here">{s}</span>
+              <span className="here">{label}</span>
             ) : (
               <span
                 onClick={clickable ? () => store.setScreen(target) : undefined}
@@ -320,7 +323,7 @@ export function Breadcrumb({ steps, here }: BreadcrumbProps) {
                   textUnderlineOffset: 3,
                 }}
               >
-                {s}
+                {label}
               </span>
             )}
             {i < steps.length - 1 && <span className="sep">›</span>}

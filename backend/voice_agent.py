@@ -50,10 +50,10 @@ VOICE_IDS = {
 
 DEFAULT_VOICE = VOICE_IDS["M"][0]
 DEFAULT_INSTRUCTIONS = (
-    "You are a patient speaking to a doctor. Keep replies to 1-2 short spoken "
-    "sentences. Output spoken dialogue only — no stage directions, no asterisks."
+    "Вы — пациент, разговаривающий с врачом. Отвечайте по-русски. "
+    "1–2 коротких предложения. Только разговорная речь — никаких ремарок, никаких звёздочек."
 )
-DEFAULT_INITIAL = "Hi doc."
+DEFAULT_INITIAL = "Здравствуйте, доктор."
 
 
 def _hash_str(s: str) -> int:
@@ -98,9 +98,9 @@ async def entrypoint(ctx: agents.JobContext):
     )
 
     session = AgentSession(
-        stt=deepgram.STT(model="nova-3", language="en"),
+        stt=deepgram.STT(model="nova-3", language="ru"),
         llm=anthropic.LLM(model="claude-haiku-4-5-20251001", temperature=0.8),
-        tts=cartesia.TTS(model="sonic-2", voice=voice_id),
+        tts=cartesia.TTS(model="sonic-2", voice=voice_id, language="ru"),
         vad=silero.VAD.load(),
     )
 
@@ -118,10 +118,10 @@ async def entrypoint(ctx: agents.JobContext):
     # says goodbye before the room is torn down. Without this the audio
     # cuts mid-sentence on dispatch.
     FAREWELLS = [
-        "Thank you, doctor. Take care.",
-        "Okay, thanks doc. Goodbye.",
-        "Thanks for your help. Bye.",
-        "Alright, take care. Goodbye.",
+        "Спасибо, доктор. Всего доброго.",
+        "Хорошо, спасибо. До свидания.",
+        "Спасибо за помощь. До свидания.",
+        "Ладно, берегите себя. До свидания.",
     ]
     farewell_pick = FAREWELLS[_hash_str(case_id) % len(FAREWELLS)]
 
@@ -142,9 +142,9 @@ async def entrypoint(ctx: agents.JobContext):
     # Patient blurts their chief complaint as soon as the doctor walks up.
     await session.generate_reply(
         instructions=(
-            f'Stay strictly in character. Speak this opening line, naturally, '
-            f'as the patient (or accompanying parent for pediatric cases) '
-            f'arriving in the room: "{initial_line}". One short sentence only.'
+            f'Оставайтесь строго в образе. Произнесите эту вступительную фразу естественно, '
+            f'от лица пациента (или сопровождающего родителя для детских случаев), '
+            f'входящего в кабинет: "{initial_line}". Только одна короткая фраза. Говорите по-русски.'
         ),
     )
 

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DoodleScatter, PatientFace, TopBar } from './primitives';
 import { CASES, CONDITION_COLORS, type Case } from '../data/cases';
-import { CLINIC_IDS, CLINIC_LABELS, type ClinicId } from '../game/clinic';
+import { CLINIC_IDS, type ClinicId } from '../game/clinic';
 import { store, useTweaks } from '../game/store';
 
 interface CaseCardProps {
@@ -150,6 +151,7 @@ const CLINIC_ICON: Record<ClinicId, string> = {
 };
 
 export function CaseLibraryScreen() {
+  const { t } = useTranslation();
   const tweaks = useTweaks();
   const [filter, setFilter] = useState<ClinicFilter>('all');
 
@@ -196,10 +198,10 @@ export function CaseLibraryScreen() {
   };
 
   const clinicChips: Array<{ id: ClinicFilter; label: string; icon?: string }> = [
-    { id: 'all', label: 'All clinics', icon: '🌈' },
-    { id: 'red-flag', label: 'Red-flag only', icon: '🚩' },
+    { id: 'all', label: t('library.allClinics'), icon: '🌈' },
+    { id: 'red-flag', label: t('library.redFlagOnly'), icon: '🚩' },
     ...CLINIC_IDS.filter((id) => id !== 'all-specialties' && (grouped.get(id)?.length ?? 0) > 0).map(
-      (id) => ({ id: id as ClinicFilter, label: CLINIC_LABELS[id], icon: CLINIC_ICON[id] }),
+      (id) => ({ id: id as ClinicFilter, label: t(`clinic.${id}`), icon: CLINIC_ICON[id] }),
     ),
   ];
 
@@ -223,14 +225,14 @@ export function CaseLibraryScreen() {
             className="btn-plush ghost"
             style={{ fontSize: 14, padding: '10px 18px' }}
             onClick={() => store.setScreen('gpRoom')}
-            title="Back to the GP room"
+            title={t('library.backBtn')}
           >
-            ← Back
+            {t('library.backBtn')}
           </button>
           <div>
-            <h1 style={{ fontSize: 36, marginBottom: 4 }}>Pick a patient</h1>
+            <h1 style={{ fontSize: 36, marginBottom: 4 }}>{t('library.pickPatient')}</h1>
             <div style={{ fontWeight: 600, color: 'var(--ink-2)', fontSize: 14 }}>
-              Cases are grouped by polyclinic — pick a specialty chip to focus.
+              {t('library.pickSub')}
             </div>
           </div>
         </div>
@@ -240,7 +242,7 @@ export function CaseLibraryScreen() {
           style={{ fontSize: 16, padding: '12px 22px', whiteSpace: 'nowrap' }}
           onClick={shuffle}
         >
-          🔀 Shuffle ({totalVisible})
+          {t('library.shuffle', { count: totalVisible })}
         </button>
       </div>
 
@@ -283,10 +285,10 @@ export function CaseLibraryScreen() {
             >
               <span style={{ fontSize: 22 }}>{CLINIC_ICON[clinic] ?? '🏥'}</span>
               <h2 style={{ fontSize: 22, margin: 0, letterSpacing: '-0.01em' }}>
-                {CLINIC_LABELS[clinic]}
+                {t(`clinic.${clinic}`)}
               </h2>
               <span className="chip" style={{ fontSize: 11, marginLeft: 6 }}>
-                {list.length} case{list.length === 1 ? '' : 's'}
+                {t('library.case_many', { count: list.length })}
               </span>
             </div>
             <div
@@ -308,7 +310,7 @@ export function CaseLibraryScreen() {
             className="plush"
             style={{ padding: 24, textAlign: 'center', color: 'var(--ink-2)', fontWeight: 700 }}
           >
-            No cases match this filter — try another chip.
+            {t('library.noMatch')}
           </div>
         )}
       </div>

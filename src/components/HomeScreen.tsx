@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PatientFace, TopBar } from './primitives';
 import { store, useTweaks } from '../game/store';
 import {
@@ -15,13 +16,7 @@ const VERDICT_COLOR: Record<EvalHistoryEntry['verdict'], string> = {
   'clear-fail': 'var(--rose)',
 };
 
-const VERDICT_LABEL: Record<EvalHistoryEntry['verdict'], string> = {
-  excellent: 'Excellent',
-  good: 'Good',
-  satisfactory: 'Satisfactory',
-  borderline: 'Borderline',
-  'clear-fail': 'Clear fail',
-};
+// VERDICT_LABEL is now handled via i18n in the component
 
 function relativeDate(ms: number): string {
   const diffMs = Date.now() - ms;
@@ -81,16 +76,16 @@ const VERDICT_SCORE: Record<EvalHistoryEntry['verdict'], number> = {
 };
 
 const DOMAIN_META = [
-  { key: 'data_gathering' as const, label: 'Data Gathering', color: 'var(--peach)', deep: 'var(--peach-deep)' },
-  { key: 'clinical_management' as const, label: 'Clinical Management', color: 'var(--mint)', deep: 'var(--mint-deep)' },
-  { key: 'interpersonal' as const, label: 'Interpersonal', color: 'var(--sky)', deep: 'var(--sky-deep)' },
+  { key: 'data_gathering' as const, labelKey: 'domain.data_gathering', color: 'var(--peach)', deep: 'var(--peach-deep)' },
+  { key: 'clinical_management' as const, labelKey: 'domain.clinical_management', color: 'var(--mint)', deep: 'var(--mint-deep)' },
+  { key: 'interpersonal' as const, labelKey: 'domain.interpersonal', color: 'var(--sky)', deep: 'var(--sky-deep)' },
 ];
 
 interface TrainingStats {
   count: number;
   avgRating: number; // 0–5
-  domains: { key: 'data_gathering' | 'clinical_management' | 'interpersonal'; label: string; pct: number; color: string; deep: string }[];
-  weakest: { label: string; pct: number; deep: string } | null;
+  domains: { key: 'data_gathering' | 'clinical_management' | 'interpersonal'; labelKey: string; pct: number; color: string; deep: string }[];
+  weakest: { labelKey: string; pct: number; deep: string } | null;
   streakDays: number;
 }
 
@@ -123,7 +118,7 @@ function computeStats(history: EvalHistoryEntry[]): TrainingStats {
   });
 
   const weakestDomain = domains.reduce((min, d) => (d.pct < min.pct ? d : min), domains[0]);
-  const weakest = { label: weakestDomain.label, pct: weakestDomain.pct, deep: weakestDomain.deep };
+  const weakest = { labelKey: weakestDomain.labelKey, pct: weakestDomain.pct, deep: weakestDomain.deep };
 
   // Streak: count consecutive days (today, yesterday, …) with at least one
   // saved review. Stops at the first gap.
@@ -146,6 +141,7 @@ function computeStats(history: EvalHistoryEntry[]): TrainingStats {
 }
 
 export function HomeScreen() {
+  const { t } = useTranslation();
   const tweaks = useTweaks();
   const [history, setHistory] = useState<EvalHistoryEntry[]>([]);
 
@@ -179,15 +175,13 @@ export function HomeScreen() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
             <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink-2)' }}>
-              {stats.count === 0 ? 'Day one' : 'Welcome back'}
+              {stats.count === 0 ? t('home.dayOne') : t('home.welcomeBack')}
             </div>
             <h1 style={{ fontSize: 44, lineHeight: 1.05, marginTop: 4 }}>
-              {stats.count === 0 ? 'Ready when you are.' : 'Welcome back, doctor.'}
+              {stats.count === 0 ? t('home.readyTitle') : t('home.welcomeTitle')}
             </h1>
             <div style={{ fontSize: 16, color: 'var(--ink-2)', fontWeight: 600, marginTop: 6 }}>
-              {stats.count === 0
-                ? 'Pick a polyclinic and your first case walks in. Your training log starts filling in after that.'
-                : 'Your training log is updating with every case you finish.'}
+              {stats.count === 0 ? t('home.readyBody') : t('home.welcomeBody')}
             </div>
           </div>
 
@@ -202,7 +196,7 @@ export function HomeScreen() {
               }}
             >
               <div style={{ position: 'absolute', top: -12, left: 22 }} className="chip butter">
-                ★ first case
+                {t('home.firstCaseChip')}
               </div>
               <div
                 style={{
@@ -219,9 +213,9 @@ export function HomeScreen() {
                   <PatientFace style={tweaks.avatarStyle} skin="#E8B68F" hair="#3B2A1F" size={120} mood="neutral" />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 900, fontSize: 22 }}>No case picked yet</div>
+                  <div style={{ fontWeight: 900, fontSize: 22 }}>{t('home.noCasePicked')}</div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-2)', marginTop: 2 }}>
-                    Choose a polyclinic — the next patient on the bench will walk straight in.
+                    {t('home.noCaseBody')}
                   </div>
                 </div>
                 <button
@@ -230,14 +224,14 @@ export function HomeScreen() {
                   style={{ fontSize: 15, padding: '14px 18px' }}
                   onClick={() => store.setScreen('mode')}
                 >
-                  Start →
+                  {t('home.startBtn')}
                 </button>
               </div>
             </div>
           ) : (
             <div className="plush-lg" style={{ background: 'var(--peach)', padding: 18, position: 'relative', transform: 'rotate(-0.6deg)' }}>
               <div style={{ position: 'absolute', top: -12, left: 22 }} className="chip butter">
-                ★ pick up where you left off
+                {t('home.pickUpChip')}
               </div>
               <div
                 style={{
@@ -268,11 +262,11 @@ export function HomeScreen() {
                   </div>
                   <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
                     <span className="chip" style={{ background: VERDICT_COLOR[history[0].verdict] }}>
-                      {VERDICT_LABEL[history[0].verdict]}
+                      {t(`verdict.${history[0].verdict}`)}
                     </span>
-                    <span className="chip">last review · {relativeDate(history[0].savedAt)}</span>
+                    <span className="chip">{t('home.lastReview')} · {relativeDate(history[0].savedAt)}</span>
                     {stats.weakest && (
-                      <span className="chip butter">focus · {stats.weakest.label.toLowerCase()}</span>
+                      <span className="chip butter">{t('home.focus')} · {t(stats.weakest.labelKey).toLowerCase()}</span>
                     )}
                   </div>
                 </div>
@@ -282,7 +276,7 @@ export function HomeScreen() {
                   style={{ fontSize: 15, padding: '14px 18px' }}
                   onClick={() => store.viewEvalHistory(history[0].id)}
                 >
-                  Review →
+                  {t('home.reviewBtn')}
                 </button>
               </div>
             </div>
@@ -294,7 +288,7 @@ export function HomeScreen() {
             style={{ fontSize: 22, padding: '18px 0', alignSelf: 'stretch' }}
             onClick={() => store.setScreen('mode')}
           >
-            ▶ Start a session
+            {t('home.startSession')}
           </button>
 
           <button
@@ -318,9 +312,9 @@ export function HomeScreen() {
             title="See how the simulator grades you — agents, citations, hard rules"
           >
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span className="chip butter" style={{ fontSize: 10 }}>NEW</span>
-              <span style={{ fontWeight: 800 }}>Agentic rounds</span>
-              <span style={{ fontWeight: 600, color: 'var(--ink-2)' }}>· how the simulator grades you</span>
+              <span className="chip butter" style={{ fontSize: 10 }}>{t('home.newChip')}</span>
+              <span style={{ fontWeight: 800 }}>{t('home.agenticRounds')}</span>
+              <span style={{ fontWeight: 600, color: 'var(--ink-2)' }}>{t('home.agenticRoundsSub')}</span>
             </span>
             <span style={{ fontWeight: 800, color: 'var(--ink-2)' }}>→</span>
           </button>
@@ -346,9 +340,9 @@ export function HomeScreen() {
             title="Live map of Opus 4.7 and the sub-rules + sessions it controls"
           >
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span className="chip peach" style={{ fontSize: 10 }}>LIVE</span>
-              <span style={{ fontWeight: 800 }}>Agent topology</span>
-              <span style={{ fontWeight: 600, color: 'var(--ink-2)' }}>· Opus 4.7 → sub-rules &amp; sessions</span>
+              <span className="chip peach" style={{ fontSize: 10 }}>{t('home.liveChip')}</span>
+              <span style={{ fontWeight: 800 }}>{t('home.agentTopology')}</span>
+              <span style={{ fontWeight: 600, color: 'var(--ink-2)' }}>{t('home.agentTopologySub')}</span>
             </span>
             <span style={{ fontWeight: 800, color: 'var(--ink-2)' }}>→</span>
           </button>
@@ -371,13 +365,13 @@ export function HomeScreen() {
                   textTransform: 'uppercase',
                 }}
               >
-                RECENT CASES
+                {t('home.recentCases')}
               </div>
               <span
                 style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)', cursor: 'pointer' }}
                 onClick={() => store.setScreen('history')}
               >
-                see all →
+                {t('home.seeAll')}
               </span>
             </div>
             {history.length === 0 ? (
@@ -393,7 +387,7 @@ export function HomeScreen() {
                   textAlign: 'center',
                 }}
               >
-                No reviews yet — finish an encounter to see your AI feedback here.
+                {t('home.noReviews')}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -440,7 +434,7 @@ export function HomeScreen() {
                         onClick={() => store.viewEvalHistory(r.id)}
                         style={{ background: color, fontSize: 11, cursor: 'pointer' }}
                       >
-                        {VERDICT_LABEL[r.verdict]}
+                        {t(`verdict.${r.verdict}`)}
                       </span>
                       <span style={{ fontSize: 12, color: 'var(--ink-2)', fontWeight: 700 }}>
                         {relativeDate(r.savedAt)}
@@ -449,9 +443,9 @@ export function HomeScreen() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (window.confirm(`Delete review for ${r.caseName}?`)) onDelete(r.id);
+                          if (window.confirm(t('home.deleteConfirm', { name: r.caseName }))) onDelete(r.id);
                         }}
-                        title="Delete this review"
+                        title={t('home.deleteTitle')}
                         style={{
                           background: 'transparent',
                           border: 'none',
@@ -486,13 +480,13 @@ export function HomeScreen() {
                 marginBottom: 10,
               }}
             >
-              YOUR TRAINING
+              {t('home.yourTraining')}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <Stat big={stats.count > 0 ? String(stats.count) : '—'} sub="cases done" />
+              <Stat big={stats.count > 0 ? String(stats.count) : '—'} sub={t('home.casesDone')} />
               <Stat
                 big={stats.count > 0 ? stats.avgRating.toFixed(1) : '—'}
-                sub="avg rating"
+                sub={t('home.avgRating')}
                 out={stats.count > 0 ? ' / 5' : ''}
               />
             </div>
@@ -515,10 +509,10 @@ export function HomeScreen() {
                   letterSpacing: '.06em',
                 }}
               >
-                WEAKEST DOMAIN
+                {t('home.weakestDomain')}
               </div>
               <div style={{ fontSize: 18, fontWeight: 900, marginTop: 2 }}>
-                {stats.weakest ? stats.weakest.label : '—'}
+                {stats.weakest ? t(stats.weakest.labelKey) : '—'}
               </div>
               <div
                 style={{
@@ -551,9 +545,9 @@ export function HomeScreen() {
                 }}
               >
                 <span>
-                  {stats.weakest ? `${stats.weakest.label} · ${stats.weakest.pct}%` : 'No reviews yet'}
+                  {stats.weakest ? `${t(stats.weakest.labelKey)} · ${stats.weakest.pct}%` : t('home.noReviewsYet')}
                 </span>
-                <span>focus area</span>
+                <span>{t('home.focusArea')}</span>
               </div>
             </div>
           </div>
@@ -569,15 +563,15 @@ export function HomeScreen() {
                 marginBottom: 10,
               }}
             >
-              DOMAIN PROGRESS
+              {t('home.domainProgress')}
             </div>
             {stats.count === 0 ? (
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-2)' }}>
-                Domain breakdown unlocks after your first AI review.
+                {t('home.domainUnlocks')}
               </div>
             ) : (
               stats.domains.map((d) => (
-                <div key={d.label} style={{ marginBottom: 10 }}>
+                <div key={d.labelKey} style={{ marginBottom: 10 }}>
                   <div
                     style={{
                       display: 'flex',
@@ -587,7 +581,7 @@ export function HomeScreen() {
                       marginBottom: 4,
                     }}
                   >
-                    <span>{d.label}</span>
+                    <span>{t(d.labelKey)}</span>
                     <span>{d.pct}%</span>
                   </div>
                   <div
@@ -625,13 +619,11 @@ export function HomeScreen() {
             <div>
               <div style={{ fontWeight: 900, fontSize: 14 }}>
                 {stats.streakDays === 0
-                  ? 'Streak: —'
-                  : `Streak: ${stats.streakDays} ${stats.streakDays === 1 ? 'day' : 'days'}`}
+                  ? t('home.streak0')
+                  : t('home.streakDays_many', { count: stats.streakDays })}
               </div>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)' }}>
-                {stats.streakDays === 0
-                  ? 'Finish your first case to start a streak.'
-                  : 'One more case today keeps it alive.'}
+                {stats.streakDays === 0 ? t('home.streakStart') : t('home.streakKeepAlive')}
               </div>
             </div>
           </div>

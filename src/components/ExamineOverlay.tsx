@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { store, useGameState, POLYCLINIC_BED_INDEX } from '../game/store';
 import { TESTS, TEST_PANELS, testById } from '../data/tests';
 import { getTestReport } from '../data/defaultTestResults';
 import { getImagingExamples } from '../data/radiologyImages';
 import { POLYCLINIC_DIAGNOSIS_LABELS, getCaseSpecialty } from '../data/polyclinicPatients';
 import { MEDICATIONS, CATEGORY_LABELS, SPECIALTY_MEDICATION_CATEGORIES, medicationById, type Medication, type MedicationCategory } from '../data/medications';
-import { CLINIC_LABELS } from '../game/clinic';
 import { getExistingConversation } from '../voice/conversationStore';
 import type { ChatMessage } from '../voice/claude';
 
@@ -20,6 +20,7 @@ const diagLabel = (id: string): string =>
   POLYCLINIC_DIAGNOSIS_LABELS[id] ?? id.replace(/-/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
 
 export function ExamineOverlay({ onClose, onDispatch }: Props) {
+  const { t } = useTranslation();
   const state = useGameState();
   const patient = state.polyclinic.patient;
   const [tab, setTab] = useState<Tab>('history');
@@ -45,12 +46,12 @@ export function ExamineOverlay({ onClose, onDispatch }: Props) {
   const rxUnlocked = submitted !== null;
 
   const tabs: Array<{ id: Tab; label: string; badge?: number | string; disabled?: boolean }> = [
-    { id: 'history', label: 'History', badge: `${asked.size}/${c.anamnesis.length}` },
-    { id: 'chat', label: 'Chat' },
-    { id: 'tests', label: 'Order tests' },
-    { id: 'results', label: 'Results', badge: newResultsCount > 0 ? newResultsCount : undefined },
-    { id: 'diagnose', label: 'Diagnose' },
-    { id: 'rx', label: 'Rx', badge: rxCount > 0 ? rxCount : undefined, disabled: !rxUnlocked },
+    { id: 'history', label: t('examine.tabs.history'), badge: `${asked.size}/${c.anamnesis.length}` },
+    { id: 'chat', label: t('examine.tabs.chat') },
+    { id: 'tests', label: t('examine.tabs.tests') },
+    { id: 'results', label: t('examine.tabs.results'), badge: newResultsCount > 0 ? newResultsCount : undefined },
+    { id: 'diagnose', label: t('examine.tabs.diagnose') },
+    { id: 'rx', label: t('examine.tabs.rx'), badge: rxCount > 0 ? rxCount : undefined, disabled: !rxUnlocked },
   ];
 
   return (
@@ -97,17 +98,17 @@ export function ExamineOverlay({ onClose, onDispatch }: Props) {
         >
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
             <span className="chip butter" style={{ fontSize: 11 }}>
-              EXAMINE
+              {t('examine.examineChip')}
             </span>
             <h2 style={{ margin: 0, fontSize: 22, lineHeight: 1.1 }}>{c.name}</h2>
             <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink-2)' }}>
-              {c.age} · {c.gender === 'F' ? 'Female' : 'Male'}
+              {c.age} · {c.gender === 'F' ? t('examine.female') : t('examine.male')}
             </span>
             <span
               className={`chip ${c.severity === 'critical' ? 'rose' : c.severity === 'urgent' ? 'peach' : 'mint'}`}
               style={{ fontSize: 11 }}
             >
-              {c.severity}
+              {t(`brief.severity.${c.severity}`, c.severity)}
             </span>
           </div>
           <button
@@ -115,9 +116,9 @@ export function ExamineOverlay({ onClose, onDispatch }: Props) {
             className="btn-plush ghost"
             onClick={onClose}
             style={{ fontSize: 13, padding: '8px 16px' }}
-            title="Close (Esc)"
+            title={t('examine.pressEsc')}
           >
-            ✕ Close
+            {t('examine.close')}
           </button>
         </div>
 
@@ -149,17 +150,17 @@ export function ExamineOverlay({ onClose, onDispatch }: Props) {
             background: 'white',
           }}
         >
-          {tabs.map((t) => {
-            const active = tab === t.id;
-            const disabled = !!t.disabled;
+          {tabs.map((tabItem) => {
+            const active = tab === tabItem.id;
+            const disabled = !!tabItem.disabled;
             return (
               <button
-                key={t.id}
+                key={tabItem.id}
                 type="button"
                 className="tap"
-                onClick={() => !disabled && setTab(t.id)}
+                onClick={() => !disabled && setTab(tabItem.id)}
                 disabled={disabled}
-                title={disabled ? 'Submit a diagnosis first' : undefined}
+                title={disabled ? t('examine.submitDiagnosisFirst') : undefined}
                 style={{
                   background: active ? 'var(--butter)' : 'white',
                   border: '3px solid var(--line)',
@@ -178,13 +179,13 @@ export function ExamineOverlay({ onClose, onDispatch }: Props) {
                   opacity: disabled ? 0.45 : 1,
                 }}
               >
-                {t.label}
-                {t.badge !== undefined && (
+                {tabItem.label}
+                {tabItem.badge !== undefined && (
                   <span
                     className="chip"
                     style={{ fontSize: 10, padding: '1px 7px', background: 'white' }}
                   >
-                    {t.badge}
+                    {tabItem.badge}
                   </span>
                 )}
               </button>
@@ -240,8 +241,8 @@ export function ExamineOverlay({ onClose, onDispatch }: Props) {
             justifyContent: 'space-between',
           }}
         >
-          <span>Press Esc to close · {ordered.size} test{ordered.size === 1 ? '' : 's'} ordered</span>
-          <span>{submitted ? `Diagnosis: ${diagLabel(submitted)}` : 'Diagnosis pending'}</span>
+          <span>{t('examine.pressEsc')} · {t('examine.testsOrdered', { count: ordered.size })}</span>
+          <span>{submitted ? t('examine.diagnosisLabel', { label: diagLabel(submitted) }) : t('examine.diagnosisPending')}</span>
         </div>
       </div>
     </div>
@@ -286,13 +287,14 @@ function Vital({
 // ── History tab ──────────────────────────────────────────────────
 
 function HistoryTab({ patient }: { patient: NonNullable<ReturnType<typeof useGameState>['polyclinic']['patient']> }) {
+  const { t } = useTranslation();
   const c = patient.case;
   const asked = new Set(patient.askedQuestionIds);
   const answered = c.anamnesis.filter((q) => asked.has(q.id));
   const unanswered = c.anamnesis.filter((q) => !asked.has(q.id));
 
   if (c.anamnesis.length === 0) {
-    return <div style={{ color: 'var(--ink-2)', fontWeight: 700 }}>No anamnesis questions for this case.</div>;
+    return <div style={{ color: 'var(--ink-2)', fontWeight: 700 }}>{t('examine.noAnamnesis')}</div>;
   }
 
   return (
@@ -309,7 +311,7 @@ function HistoryTab({ patient }: { patient: NonNullable<ReturnType<typeof useGam
             gap: 4,
           }}
         >
-          <div style={{ fontWeight: 800, fontSize: 13, color: 'var(--ink-2)' }}>You asked</div>
+          <div style={{ fontWeight: 800, fontSize: 13, color: 'var(--ink-2)' }}>{t('examine.youAsked')}</div>
           <div style={{ fontWeight: 700, fontSize: 14 }}>{q.question}</div>
           <div style={{ marginTop: 4, fontSize: 14, fontStyle: 'italic' }}>
             <strong>{c.name.split(' ')[0]}:</strong> "{q.answer}"
@@ -319,7 +321,7 @@ function HistoryTab({ patient }: { patient: NonNullable<ReturnType<typeof useGam
 
       {unanswered.length === 0 ? (
         <div className="plush" style={{ padding: 12, fontWeight: 700, color: 'var(--ink-2)' }}>
-          All questions covered. Move on to ordering tests or making a diagnosis.
+          {t('examine.allCovered')}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -333,7 +335,7 @@ function HistoryTab({ patient }: { patient: NonNullable<ReturnType<typeof useGam
               marginTop: 8,
             }}
           >
-            Ask
+            {t('examine.askHeader')}
           </div>
           {unanswered.map((q) => (
             <button
@@ -360,12 +362,13 @@ function HistoryTab({ patient }: { patient: NonNullable<ReturnType<typeof useGam
 // ── Order Tests tab ───────────────────────────────────────────────
 
 function TestsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGameState>['polyclinic']['patient']> }) {
+  const { t } = useTranslation();
   const state = useGameState();
   const currentClinic = state.polyclinic.clinic;
   const ordered = new Set(patient.orderedTestIds);
   const groups = useMemo(() => {
     const out: Record<'bedside' | 'lab' | 'imaging', typeof TESTS> = { bedside: [], lab: [], imaging: [] };
-    TESTS.forEach((t) => out[t.category].push(t));
+    TESTS.forEach((test) => out[test.category].push(test));
     return out;
   }, []);
 
@@ -393,15 +396,15 @@ function TestsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGameS
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-2)' }}>
-        Polyclinic tests return <strong>instantly</strong>. Sections are collapsed — click a row to open it.
-      </div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-2)' }}
+        dangerouslySetInnerHTML={{ __html: t('examine.testsInstant') }}
+      />
 
       {/* Panels — clinic-scoped, collapsible. */}
       {visiblePanels.length > 0 && (
         <CollapsibleSection
           icon="🧪"
-          label={`Panels for ${currentClinic === 'all-specialties' ? 'every specialty' : 'this clinic'}`}
+          label={t('examine.panelsFor', { scope: currentClinic === 'all-specialties' ? t('examine.panelsForAll') : t('examine.panelsForClinic') })}
           count={visiblePanels.length}
           tone="var(--butter)"
         >
@@ -441,7 +444,7 @@ function TestsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGameS
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      {panel.testIds.length} tests
+                      {t('examine.tests', { count: panel.testIds.length })}
                     </span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 700, marginTop: 4 }}>
@@ -457,8 +460,8 @@ function TestsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGameS
       {/* Per-category lists, also collapsible. */}
       {(['bedside', 'lab', 'imaging'] as const).map((cat) => {
         const list = groups[cat];
-        const available = list.filter((t) => !ordered.has(t.id));
-        const label = cat === 'bedside' ? 'Bedside' : cat === 'lab' ? 'Laboratory' : 'Imaging';
+        const available = list.filter((test) => !ordered.has(test.id));
+        const label = cat === 'bedside' ? t('examine.bedside') : cat === 'lab' ? t('examine.laboratory') : t('examine.imaging');
         const icon = cat === 'bedside' ? '🩺' : cat === 'lab' ? '🧬' : '📷';
         const tone = cat === 'bedside' ? 'var(--mint)' : cat === 'lab' ? 'var(--sky)' : 'var(--peach)';
         return (
@@ -468,7 +471,7 @@ function TestsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGameS
             label={label}
             count={list.length}
             tone={tone}
-            extra={`${available.length} available`}
+            extra={t('examine.available', { count: available.length })}
           >
             <div
               style={{
@@ -477,15 +480,15 @@ function TestsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGameS
                 gap: 8,
               }}
             >
-              {list.map((t) => {
-                const isOrdered = ordered.has(t.id);
+              {list.map((test) => {
+                const isOrdered = ordered.has(test.id);
                 return (
                   <button
-                    key={t.id}
+                    key={test.id}
                     type="button"
                     className={`tap btn-plush ${isOrdered ? '' : 'ghost'}`}
                     disabled={isOrdered}
-                    onClick={() => store.orderPolyclinicTest(t.id)}
+                    onClick={() => store.orderPolyclinicTest(test.id)}
                     style={{
                       ...cardStyle,
                       opacity: isOrdered ? 0.55 : 1,
@@ -502,7 +505,7 @@ function TestsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGameS
                     >
                       <span>
                         {isOrdered ? '✓ ' : ''}
-                        {t.name}
+                        {test.name}
                       </span>
                       <span
                         style={{
@@ -518,7 +521,7 @@ function TestsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGameS
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {isOrdered ? 'ordered' : 'instant'}
+                        {isOrdered ? t('examine.ordered') : t('examine.instant')}
                       </span>
                     </div>
                   </button>
@@ -629,6 +632,7 @@ function CollapsibleSection({
 // ── Results tab ──────────────────────────────────────────────────
 
 function ResultsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGameState>['polyclinic']['patient']> }) {
+  const { t } = useTranslation();
   const c = patient.case;
   const completed = new Set(patient.completedTestIds);
   const [zoomed, setZoomed] = useState<{ url: string; caption: string; credit: string } | null>(null);
@@ -644,9 +648,9 @@ function ResultsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGam
 
   if (patient.orderedTestIds.length === 0) {
     return (
-      <div className="plush" style={{ padding: 14, fontWeight: 700, color: 'var(--ink-2)' }}>
-        No tests ordered yet — head to <strong>Order tests</strong>.
-      </div>
+      <div className="plush" style={{ padding: 14, fontWeight: 700, color: 'var(--ink-2)' }}
+        dangerouslySetInnerHTML={{ __html: t('examine.noTestsYet') }}
+      />
     );
   }
 
@@ -691,7 +695,7 @@ function ResultsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGam
               />
               <span>{test.name}</span>
               <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--ink-2)' }}>
-                {report?.abnormal ? 'abnormal' : 'normal'}
+                {report?.abnormal ? t('examine.abnormal') : t('examine.normal')}
               </span>
             </summary>
 
@@ -752,7 +756,7 @@ function ResultsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGam
                   listStyle: 'none',
                 }}
               >
-                {images.length > 0 ? '▸ Show written report' : '▸ Show details'}
+                {images.length > 0 ? t('examine.showWrittenReport') : t('examine.showDetails')}
               </summary>
               <div
                 style={{
@@ -767,7 +771,7 @@ function ResultsTab({ patient }: { patient: NonNullable<ReturnType<typeof useGam
                   border: '2px solid var(--line)',
                 }}
               >
-                {report?.text ?? 'Pending…'}
+                {report?.text ?? t('examine.pending')}
               </div>
             </details>
           </details>
@@ -884,6 +888,7 @@ function DiagnoseTab({
   onGoToRx: () => void;
   submitted: string | null;
 }) {
+  const { t } = useTranslation();
   const c = patient.case;
   // Source data lists the correct answer first; shuffle deterministically per
   // case so the player can't game it by always tapping the top tile, while
@@ -895,7 +900,7 @@ function DiagnoseTab({
   if (c.diagnosisOptions.length === 0) {
     return (
       <div className="plush" style={{ padding: 14, fontWeight: 700, color: 'var(--ink-2)' }}>
-        No diagnosis options for this case.
+        {t('examine.noDiagnosisOptions')}
       </div>
     );
   }
@@ -904,7 +909,7 @@ function DiagnoseTab({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ fontWeight: 700, color: 'var(--ink-2)' }}>
-        Pick the most likely diagnosis based on what you've gathered so far.
+        {t('examine.diagnoseBody')}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
         {shuffledOptions.map((dxId) => {
@@ -944,8 +949,8 @@ function DiagnoseTab({
           }}
         >
           {isCorrect
-            ? `✓ Spot on — ${diagLabel(c.correctDiagnosisId)}.`
-            : `✗ Not quite. The correct diagnosis was ${diagLabel(c.correctDiagnosisId)}.`}
+            ? t('examine.spotOn', { label: diagLabel(c.correctDiagnosisId) })
+            : t('examine.notQuite', { label: diagLabel(c.correctDiagnosisId) })}
         </div>
       )}
 
@@ -957,7 +962,7 @@ function DiagnoseTab({
             style={{ fontSize: 16, padding: '14px 0' }}
             onClick={onGoToRx}
           >
-            Write prescription →
+            {t('examine.writePrescription')}
           </button>
           <button
             type="button"
@@ -965,7 +970,7 @@ function DiagnoseTab({
             style={{ fontSize: 16, padding: '14px 0' }}
             onClick={onDispatch}
           >
-            Dispatch without Rx →
+            {t('examine.dispatchWithoutRx')}
           </button>
         </div>
       )}
@@ -976,6 +981,7 @@ function DiagnoseTab({
 // ── Chat tab — live voice transcript ─────────────────────────────
 
 function ChatTab({ patientName }: { patientName: string }) {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<ReadonlyArray<ChatMessage>>(() => {
     const conv = getExistingConversation(POLYCLINIC_BED_INDEX);
     return conv ? conv.getMessages() : [];
@@ -1005,8 +1011,7 @@ function ChatTab({ patientName }: { patientName: string }) {
   if (visible.length === 0) {
     return (
       <div className="plush" style={{ padding: 14, fontWeight: 700, color: 'var(--ink-2)' }}>
-        No conversation yet. The transcript appears here as you talk to {patientName.split(' ')[0]} —
-        and updates live during the consultation.
+        {t('examine.noConversation', { name: patientName.split(' ')[0] })}
       </div>
     );
   }
@@ -1052,7 +1057,7 @@ function ChatTab({ patientName }: { patientName: string }) {
                 marginBottom: 2,
               }}
             >
-              {mine ? 'You' : patientName.split(' ')[0]}
+              {mine ? t('examine.you') : patientName.split(' ')[0]}
             </div>
             {m.content}
           </div>
@@ -1073,15 +1078,15 @@ function RxTab({
   onDispatch: () => void;
   unlocked: boolean;
 }) {
+  const { t } = useTranslation();
   const [picked, setPicked] = useState<Record<string, { dose: string; duration: string }>>({});
   const [filter, setFilter] = useState<MedicationCategory | 'all'>('all');
 
   if (!unlocked) {
     return (
-      <div className="plush" style={{ padding: 14, fontWeight: 700, color: 'var(--ink-2)' }}>
-        Submit a diagnosis first — the prescription pad unlocks once the
-        <strong> Diagnose </strong> tab has a selected answer.
-      </div>
+      <div className="plush" style={{ padding: 14, fontWeight: 700, color: 'var(--ink-2)' }}
+        dangerouslySetInnerHTML={{ __html: t('examine.rxUnlockHint') }}
+      />
     );
   }
 
@@ -1157,7 +1162,7 @@ function RxTab({
               marginBottom: 8,
             }}
           >
-            Prescribed ({submitted.length})
+            {t('examine.prescribedHeader', { count: submitted.length })}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {submitted.map((rx, i) => {
@@ -1187,10 +1192,8 @@ function RxTab({
             color: 'var(--ink-2)',
             background: 'var(--cream)',
           }}
-        >
-          Scope: <strong>{CLINIC_LABELS[specialty]}</strong> formulary —
-          drugs outside this specialty are hidden.
-        </div>
+          dangerouslySetInnerHTML={{ __html: t('examine.specialtyScope', { clinic: t(`clinic.${specialty}`) }) }}
+        />
       )}
 
       {/* Category filter */}
@@ -1200,7 +1203,7 @@ function RxTab({
           style={{ cursor: 'pointer' }}
           onClick={() => setFilter('all')}
         >
-          All
+          {t('examine.all')}
         </span>
         {categories.map((c) => (
           <span
@@ -1274,7 +1277,7 @@ function RxTab({
               textTransform: 'uppercase',
             }}
           >
-            Selected ({pickedList.length}) — review dose / duration
+            {t('examine.selectedReview', { count: pickedList.length })}
           </div>
           {pickedList.map(({ med, dose, duration }) => (
             <div
@@ -1307,14 +1310,14 @@ function RxTab({
                     color: 'var(--ink-2)',
                     fontSize: 14,
                   }}
-                  title="Remove"
+                  title={t('examine.remove')}
                 >
                   ✕
                 </button>
               </div>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <label style={{ flex: '1 1 140px', fontSize: 11, fontWeight: 800, color: 'var(--ink-2)' }}>
-                  Dose
+                  {t('examine.dose')}
                   <input
                     value={dose}
                     onChange={(e) => updatePicked(med.id, 'dose', e.target.value)}
@@ -1323,7 +1326,7 @@ function RxTab({
                   />
                 </label>
                 <label style={{ flex: '1 1 140px', fontSize: 11, fontWeight: 800, color: 'var(--ink-2)' }}>
-                  Duration
+                  {t('examine.duration')}
                   <input
                     value={duration}
                     onChange={(e) => updatePicked(med.id, 'duration', e.target.value)}
@@ -1340,7 +1343,7 @@ function RxTab({
             onClick={onSubmitAll}
             style={{ fontSize: 14, padding: '10px 18px' }}
           >
-            ➕ Add {pickedList.length} to prescription
+            {t('examine.addToPrescription', { count: pickedList.length })}
           </button>
         </div>
       )}
@@ -1351,7 +1354,7 @@ function RxTab({
         style={{ fontSize: 18, padding: '14px 0' }}
         onClick={onDispatch}
       >
-        {submitted.length === 0 ? 'Dispatch without prescription →' : 'Dispatch patient →'}
+        {submitted.length === 0 ? t('examine.dispatchWithout') : t('examine.dispatchWith')}
       </button>
     </div>
   );
