@@ -105,6 +105,10 @@ async def require_shared_secret(request: Request, call_next):
     origin = request.headers.get("origin", "")
     if origin in TRUSTED_ORIGINS:
         return await call_next(request)
+    # Vercel server-side rewrites don't forward Origin but do set x-forwarded-host.
+    fwd_host = request.headers.get("x-forwarded-host", "")
+    if any(fwd_host == h.removeprefix("https://").removeprefix("http://") for h in TRUSTED_ORIGINS):
+        return await call_next(request)
     # Same-origin GETs (incl. EventSource) don't send Origin per the Fetch
     # spec, but they DO send Referer. Trust trusted-origin Referer in lieu of
     # Origin so SSE streams work without an explicit secret.
